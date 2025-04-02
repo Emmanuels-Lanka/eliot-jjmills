@@ -17,7 +17,29 @@ export async function DELETE(
             return new NextResponse("OBB sheet does not exist!", { status: 409 })
         }
 
-        const deletedSheet = await db.obbSheet.delete({
+        // Fetch the obb operations for this sheet
+        const obbOperations = await db.obbOperation.findMany({
+            where: {
+                obbSheetId: params.obbSheetId
+            }
+        });
+
+        // Change the activeObbOperation on each assigned machine
+        for (const operation of obbOperations) {
+            if (operation.sewingMachineId) {
+                await db.sewingMachine.update({
+                    where: {
+                        id: operation.sewingMachineId
+                    },
+                    data: {
+                        activeObbOperationId: null,
+                    }
+                });
+            }
+        }
+
+        // Delete the OBB sheet
+        await db.obbSheet.delete({
             where: {
                 id: params.obbSheetId
             }
@@ -36,10 +58,10 @@ export async function PUT(
 ) {
     try {
         const { 
-            unitId, productionLineId, indEngineer, supervisor1, supervisor2, mechanic, qualityIns, accInputMan, fabInputMan, 
-            buyer, style, item, operators, helpers, startingDate, endingDate, workingHours, 
-            efficiencyLevel1, efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV, bottleNeckTarget, target100, 
-            ucl, lcl, balancingLoss, balancingRatio, colour, supResponseTime, mecResponseTime, qiResponseTime, 
+            version, unitId, productionLineId, indEngineer, supervisor1, supervisor2, supervisor3, supervisor4, mechanic, qualityIns, accInputMan, fabInputMan, lineChief,
+            buyer, style, item, operators, helpers, startingDate, endingDate, workingHours, factoryStartTime, factoryStopTime, bundleTime, personalAllowance,
+            efficiencyLevel1, efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV, availableMinPerHour, obbOperationsNo, bottleNeckTarget, target100, 
+            ucl, lcl, balancingLoss, balancingRatio, colour, supResponseTime, mecResponseTime, qiResponseTime,intervalStartTime,intervalStopTime
         } = await req.json();
 
         const existingSheetById = await db.obbSheet.findUnique({
@@ -59,7 +81,7 @@ export async function PUT(
             }
         });
 
-        const name = `${line?.name}-${style}`
+        const name = `${line?.name}-${style}-v${version}`
 
         const updatedSheet = await db.obbSheet.update({
             where: {
@@ -68,14 +90,17 @@ export async function PUT(
             data: {
                 name, unitId, productionLineId, 
                 indEngineerId: indEngineer, 
-                supervisor1Id: supervisor1, 
-                supervisor2Id: supervisor2,
+                supervisorFrontId: supervisor1, 
+                supervisorBackId: supervisor2,
+                supervisorAssemblyId: supervisor3,
+                supervisorLineEndId: supervisor4, 
                 mechanicId: mechanic, 
                 qualityInsId: qualityIns, 
                 accInputManId: accInputMan, 
                 fabInputManId: fabInputMan, 
-                buyer, style, item, operators, helpers, startingDate, endingDate, workingHours, efficiencyLevel1,
-                efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV, bottleNeckTarget,
+                lineChiefId: lineChief,intervalStartTime,intervalStopTime,
+                buyer, style, item, operators, helpers, startingDate, endingDate, factoryStartTime, factoryStopTime, workingHours: parseFloat(workingHours), bundleTime, personalAllowance,
+                efficiencyLevel1, efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV: parseFloat(totalSMV), availableMinPerHour, obbOperationsNo, bottleNeckTarget,
                 target100, ucl, lcl, balancingLoss, balancingRatio, colour, supResponseTime, mecResponseTime, qiResponseTime,
             }
         });

@@ -10,6 +10,7 @@ export async function GET(
     const operatorId = url.searchParams.get('operatorId');
     const date = url.searchParams.get('date');
     
+    console.log("asd",operatorId,obbSheetId,date)
 
     if (!operatorId || !obbSheetId || !date) {
         return new NextResponse("Missing required parameters: obbSheetId or date or operatorId", { status: 409 })
@@ -63,11 +64,29 @@ export async function GET(
                 },
             },
             include: {
-                operator: true,
-                eliotDevice: true,
+                operator: {
+                    select: {
+                        name: true,
+                        employeeId: true,
+                        rfid: true
+                    }
+                },
                 obbOperation: {
-                    include: {
-                        operation: true,
+                    select: {
+                        id: true,
+                        seqNo: true,
+                        target: true,
+                        smv: true,
+                        operation: {
+                            select: {
+                                name: true
+                            }
+                        },
+                        sewingMachine: {
+                            select:{
+                                machineId:true
+                            }
+                        }
                     }
                 }
             }

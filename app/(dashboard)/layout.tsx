@@ -22,20 +22,24 @@ const DashboardLayout = ({
     const secret = process.env.JWT_SECRET || "";
     
     const verified = verify(value, secret) as JwtPayload;
+    // console.log("ROLE", verified.role);
         
     if (verified.role === 'quality-controller') {
         return redirect('/qc-dashboard');
+    } else if (verified.role === 'roming-quality-inspector') {
+        return redirect('/roaming-qc');
     } else {
         return (
             <div className="h-screen w-full">
                 <div className="flex felx-col h-full w-64 fixed inset-y-0 z-50">
-                    <Sidebar />
+                    <Sidebar role={verified.role}/>
                 </div>
                 <div className="ml-64 h-full">
                     <div className="sticky top-0 w-full z-10 border-b shadow-sm">
                         <DashboardHeader />
+                       
                     </div>
-                    <main className="dashboard-body-height p-4">
+                    <main className="dashboard-body-height px-4">
                         {children}
                     </main>
                     <div className="sticky bottom-0 w-full border-t">

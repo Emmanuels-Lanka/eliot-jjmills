@@ -29,6 +29,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import SelectBundleStyles from "../common/select-bundle-styles";
+import moment from "moment-timezone";
 
 interface CreateObbSheetFormProps {
     units: {
@@ -41,12 +43,18 @@ interface CreateObbSheetFormProps {
     industrialEngineer: Staff[] | null;
     accessoriesInputMan: Staff[] | null;
     fabricInputMan: Staff[] | null;
+    lineChief: Staff[] | null;
     initialData?: ObbSheet | null;
     obbSheetId?: string;
     mode?: string;
+    user?: {
+        email: string;
+        role: string;
+    }
 }
 
 const formSchema = z.object({
+    version: z.string(),
     unitId: z.string().min(1, {
         message: "Production Unit is required"
     }),
@@ -60,6 +68,8 @@ const formSchema = z.object({
         message: "Supervisor is required"
     }),
     supervisor2: z.string().nullable(),
+    supervisor3: z.string().nullable(),
+    supervisor4: z.string().nullable(),
     mechanic: z.string().min(1, {
         message: "Mechanic is required"
     }),
@@ -72,6 +82,9 @@ const formSchema = z.object({
     fabInputMan: z.string().min(1, {
         message: "Fabric Input Man is required"
     }),
+    lineChief: z.string().min(1, {
+        message: "Line chief is required"
+    }),
     buyer: z.string().min(1, {
         message: "Buyer is required"
     }),
@@ -83,25 +96,31 @@ const formSchema = z.object({
     helpers: z.number(),
     startingDate: z.date(),
     endingDate: z.date(),
-    workingHours: z.number({
-        required_error: "Working Hours is required",
-    }),
-    efficiencyLevel1: z.number(),
-    efficiencyLevel2: z.number(),
-    efficiencyLevel3: z.number(),
-    itemReference: z.string().nullable(),
-    totalMP: z.number().nullable(),
-    totalSMV: z.number().nullable(),
-    bottleNeckTarget: z.number().nullable(),
-    target100: z.number().nullable(),
-    ucl: z.number().nullable(),
-    lcl: z.number().nullable(),
-    balancingLoss: z.number().nullable(),
-    balancingRatio: z.number().nullable(),
+    factoryStartTime: z.string().optional(),
+    factoryStopTime: z.string().optional(),
+    intervalStartTime: z.string().optional(),
+    intervalStopTime: z.string().optional(),
+    bundleTime: z.string().optional(),
+    personalAllowance: z.string().optional(),
+    workingHours: z.number().optional(),
+    efficiencyLevel1: z.number().optional(),
+    efficiencyLevel2: z.number().optional(),
+    efficiencyLevel3: z.number().optional(),
+    itemReference: z.string().optional().nullable(),
+    totalMP: z.number().optional().nullable(),
+    totalSMV: z.string().optional(),
+    obbOperationsNo: z.number().optional(),
+    availableMinPerHour: z.number().optional(),
+    bottleNeckTarget: z.number().optional().nullable(),
+    target100: z.number().optional().nullable(),
+    ucl: z.number().optional().nullable(),
+    lcl: z.number().optional().nullable(),
+    balancingLoss: z.number().optional().nullable(),
+    balancingRatio: z.number().optional().nullable(),
     colour: z.string(),
-    supResponseTime: z.number().nullable(),
-    mecResponseTime: z.number().nullable(),
-    qiResponseTime: z.number().nullable(),
+    supResponseTime: z.number().optional().nullable(),
+    mecResponseTime: z.number().optional().nullable(),
+    qiResponseTime: z.number().optional().nullable(),
 });
 
 const CreateObbSheetForm = ({
@@ -112,9 +131,11 @@ const CreateObbSheetForm = ({
     industrialEngineer,
     accessoriesInputMan,
     fabricInputMan,
+    lineChief,
     initialData,
     obbSheetId,
-    mode
+    mode,
+    user
 }: CreateObbSheetFormProps) => {
     const { toast } = useToast();
     const router = useRouter();
@@ -125,15 +146,19 @@ const CreateObbSheetForm = ({
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            version: initialData?.version || "1.0",
             unitId: initialData?.unitId || "",
             productionLineId: initialData?.productionLineId || "",
             indEngineer: initialData?.indEngineerId || "",
-            supervisor1: initialData?.supervisor1Id || "",
-            supervisor2: initialData?.supervisor2Id || "",
+            supervisor1: initialData?.supervisorFrontId || "",
+            supervisor2: initialData?.supervisorBackId || "",
+            supervisor3: initialData?.supervisorAssemblyId || "",
+            supervisor4: initialData?.supervisorLineEndId || "",
             mechanic: initialData?.mechanicId || "",
             qualityIns: initialData?.qualityInsId || "",
             accInputMan: initialData?.accInputManId || "",
             fabInputMan: initialData?.fabInputManId || "",
+            lineChief: initialData?.lineChiefId || "",
             buyer: initialData?.buyer || "",
             style: initialData?.style || "",
             item: initialData?.item || "",
@@ -141,13 +166,21 @@ const CreateObbSheetForm = ({
             helpers: initialData?.helpers || 0,
             startingDate: startingDateFormated || undefined,
             endingDate: endingDateFormated || undefined,
-            workingHours: initialData?.workingHours || 0,
+            factoryStartTime: initialData?.factoryStartTime || "",
+            factoryStopTime: initialData?.factoryStopTime || "",
+            intervalStartTime: initialData?.intervalStartTime || "",
+            intervalStopTime: initialData?.intervalStopTime || "",
+            bundleTime: initialData?.bundleTime || "",
+            personalAllowance: initialData?.personalAllowance || "",
+            workingHours: initialData?.workingHours || 10,
             efficiencyLevel1: initialData?.efficiencyLevel1 || 0,
             efficiencyLevel2: initialData?.efficiencyLevel2 || 0,
             efficiencyLevel3: initialData?.efficiencyLevel3 || 0,
             itemReference: initialData?.itemReference || "",
             totalMP: initialData?.totalMP || 0,
-            totalSMV: initialData?.totalSMV || 0,
+            totalSMV: initialData?.totalSMV?.toString() || "0.1",
+            obbOperationsNo: initialData?.obbOperationsNo || undefined,
+            availableMinPerHour: initialData?.availableMinPerHour || undefined,
             bottleNeckTarget: initialData?.bottleNeckTarget || 0,
             target100: initialData?.target100 || 0,
             ucl: initialData?.ucl || 0,
@@ -181,42 +214,42 @@ const CreateObbSheetForm = ({
         };
     });
 
+    const handleCreateActivityLog = async (activity: string) => {
+        const payload = {
+            part: "Obb Sheet",
+            activity,
+        }
+        console.log("Created activity log: ", activity);
+        
+        try {
+            const res = await axios.post('/api/activity-log', payload);
+        } catch (error: any) {
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
+        }
+    }
+
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         if (mode && mode === 'create') {
             try {
                 const res = await axios.post('/api/obb-sheet', data);
                 toast({
-                    title: "Successfully created new OBB sheet",
+                    title: `Successfully created new OBB sheet: ${res.data.data.style}`,
                     variant: "success",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                Style: {res.data.data.style}
-                            </code>
-                        </div>
-                    ),
                 });
                 router.push(`/obb-sheets/${res.data.data.id}`);
                 router.refresh();
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
+            } finally {
+                await handleCreateActivityLog(`Created new OBB sheet for style ${data.style} by ${user?.email ?? "unknown"} (${user?.role})`);
             }
         } else {
             try {
@@ -227,27 +260,54 @@ const CreateObbSheetForm = ({
                 });
                 router.refresh();
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
+            } finally {
+                await handleCreateActivityLog(`Updated the OBB style (${data.style}) by ${user?.email ?? "unknown"} (${user?.role})`);
             }
         }
     }
+
+    useEffect(() => {
+        const fetchOBBOperations = async () => {
+            try {
+                const response = await axios.get(`/api/obb-sheet?obbSheetId=${obbSheetId}`);
+
+                // console.log(response.data);
+            } catch (error) {
+
+                if (axios.isAxiosError(error)) {
+                    console.error('Axios error:', error.message);
+                } else {
+                    console.error('Unknown error:', error);
+                }
+            }
+        };
+
+        fetchOBBOperations();
+    }, []);
+
+    const calculateWorkingHours = (startTime: string, stopTime: string) => {
+        const [startHours, startMinutes] = startTime.split(':').map(Number);
+        const [stopHours, stopMinutes] = stopTime.split(':').map(Number);
+
+        const startDate = new Date();
+        startDate.setHours(startHours, startMinutes, 0);
+
+        const stopDate = new Date();
+        stopDate.setHours(stopHours, stopMinutes, 0);
+
+        // Calculate the difference in milliseconds
+        const timeDiff = stopDate.getTime() - startDate.getTime();
+
+        // Convert milliseconds to total hours (including fractional part)
+        const totalHours = timeDiff / (1000 * 60 * 60); // 1 hour = 1000 * 60 * 60 ms
+
+        return totalHours;
+    };
 
     return (
         <div className={cn('mx-auto max-w-7xl border rounded-lg', mode === 'create' ? 'shadow-xl my-16 px-12 pt-6 pb-10 max-xl:px-8 max-xl:pt-4' : 'bg-slate-100 px-8 pt-4 pb-8')}>
@@ -258,6 +318,25 @@ const CreateObbSheetForm = ({
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
                         <div className="flex flex-col gap-y-6">
+                            <FormField
+                                control={form.control}
+                                name="version"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            OBB Version
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                disabled={isSubmitting}
+                                                placeholder="e.g. '1.0'"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="unitId"
@@ -308,6 +387,30 @@ const CreateObbSheetForm = ({
                             />
                             <FormField
                                 control={form.control}
+                                name="lineChief"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">
+                                            Line Chief
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select an option" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {lineChief && lineChief.map((lc) => (
+                                                    <SelectItem key={lc.id} value={lc.id}>{lc.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
                                 name="indEngineer"
                                 render={({ field }) => (
                                     <FormItem>
@@ -336,13 +439,13 @@ const CreateObbSheetForm = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-sm">
-                                            Responsible Supervisor 1
+                                            supervisorFront
                                         </FormLabel>
-                                        <Select 
+                                        <Select
                                             onValueChange={(value) => {
                                                 field.onChange(value);
                                                 setSelectedSupervisor(value);
-                                            }} 
+                                            }}
                                             defaultValue={field.value}
                                         >
                                             <FormControl>
@@ -366,7 +469,7 @@ const CreateObbSheetForm = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="text-sm">
-                                            Responsible Supervisor 2
+                                            supervisorBack
                                         </FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                                             <FormControl>
@@ -375,7 +478,73 @@ const CreateObbSheetForm = ({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {supervisor && 
+                                                {supervisor &&
+                                                    supervisor.map((sup) => {
+                                                        if (sup.id === selectedSupervisor) {
+                                                            return null;
+                                                        }
+                                                        return (
+                                                            <SelectItem key={sup.id} value={sup.id}>
+                                                                {sup.name}
+                                                            </SelectItem>
+                                                        )
+                                                    })
+                                                }
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField control={form.control}
+                                name="supervisor3"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">
+                                            supervisorAssembly
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select an option" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {supervisor &&
+                                                    supervisor.map((sup) => {
+                                                        if (sup.id === selectedSupervisor) {
+                                                            return null;
+                                                        }
+                                                        return (
+                                                            <SelectItem key={sup.id} value={sup.id}>
+                                                                {sup.name}
+                                                            </SelectItem>
+                                                        )
+                                                    })
+                                                }
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField control={form.control}
+                                name="supervisor4"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">
+                                            supervisorLineEnd
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select an option" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {supervisor &&
                                                     supervisor.map((sup) => {
                                                         if (sup.id === selectedSupervisor) {
                                                             return null;
@@ -417,7 +586,7 @@ const CreateObbSheetForm = ({
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                              <FormField
                                 control={form.control}
                                 name="qualityIns"
                                 render={({ field }) => (
@@ -444,6 +613,8 @@ const CreateObbSheetForm = ({
                         </div>
 
                         <div className="flex flex-col gap-y-6">
+                            
+                
                             <FormField
                                 control={form.control}
                                 name="accInputMan"
@@ -511,7 +682,7 @@ const CreateObbSheetForm = ({
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                            {/* <FormField
                                 control={form.control}
                                 name="style"
                                 render={({ field }) => (
@@ -520,10 +691,34 @@ const CreateObbSheetForm = ({
                                             Style
                                         </FormLabel>
                                         <FormControl>
+                                            
+                                            <SelectBundleStyles 
+                                                defaultValue={field.value}
+                                                onChange={(value) => {
+                                                    // console.log("Selected style:", value);
+                                                    field.onChange(value);
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            /> */}
+                             <FormField
+                                control={form.control}
+                                name="style"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm">
+                                            Style
+                                        </FormLabel>
+                                        <FormControl>
                                             <Input
                                                 disabled={isSubmitting}
                                                 placeholder="Enter the style"
-                                                {...field}
+                                                value={field.value ?? ''} // Ensure value is always a string
+                                                onChange={field.onChange}
+                                                onBlur={field.onBlur}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -599,9 +794,222 @@ const CreateObbSheetForm = ({
                                     </FormItem>
                                 )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="factoryStartTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Factory Starting Time
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="time"
+                                                disabled={isSubmitting}
+                                                placeholder="Enter starting time    "
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="factoryStopTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Factory Stoping Time
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="time"
+                                                disabled={isSubmitting || !form.watch("factoryStartTime")}
+                                                placeholder="Enter starting time    "
+                                                {...field}
+                                                onChange={(e) => {
+                                                    const stopTime = e.target.value;
+                                                    const startTime = form.watch("factoryStartTime");
+
+                                                    field.onChange(stopTime);
+
+                                                    if (startTime && stopTime) {
+                                                        const totalHours = calculateWorkingHours(startTime, stopTime);
+                                                        console.log(`Working hours: ${totalHours.toFixed(2)} hours`);
+                                                        form.setValue("workingHours", totalHours)
+                                                    }
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="intervalStartTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Interval Starting Time
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="time"
+                                                disabled={isSubmitting}
+                                                placeholder="Enter starting time    "
+                                                value={field.value ? field.value.slice(0, 5) : ""}
+                                                onChange={(e) => field.onChange(`${e.target.value}:00`)} // Appends :00
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                        <FormField
+                                control={form.control}
+                                name="intervalStopTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                        Interval Ending Time
+                                        </FormLabel>
+                                        <FormControl>
+                                        <Input
+                                                type="time"
+                                                disabled={isSubmitting}
+                                                placeholder="Enter Interval Ending time    "
+                                                value={field.value ? field.value.slice(0, 5) : ""}
+                                                onChange={(e) => field.onChange(`${e.target.value}:00`)} // Appends :00
+                                               
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
                         <div className="flex flex-col gap-y-6">
+                        
+                            
+                            <FormField
+                                control={form.control}
+                                name="totalSMV"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Total SMV
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                disabled={isSubmitting}
+                                                placeholder="e.g '0.32'"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="availableMinPerHour"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Available Min Per Hour
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                className="hide-steps-number-input"
+                                                disabled={isSubmitting}
+                                                placeholder="Enter the number"
+                                                {...field}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (value === "" || (Number(value) >= 0 && Number(value) <= 60)) {
+                                                        field.onChange(e);
+                                                        const newValue: number = parseInt(value);
+                                                        form.setValue('availableMinPerHour', newValue || undefined, { shouldValidate: true, shouldDirty: true });
+                                                    }
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="obbOperationsNo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            No of Obb Operations (Helper + Iron + Sewing)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                className="hide-steps-number-input"
+                                                disabled={isSubmitting}
+                                                placeholder="Enter the number"
+                                                {...field}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (value === "" || Number(value) >= 0) {
+                                                        field.onChange(e);
+                                                        const newValue: number = parseInt(value);
+                                                        form.setValue('obbOperationsNo', newValue || undefined, { shouldValidate: true, shouldDirty: true });
+                                                    }
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="bundleTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Bundle Time (Minutes)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                disabled={isSubmitting}
+                                                placeholder="e.g '0.32'"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="personalAllowance"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Allowance (%)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                disabled={isSubmitting}
+                                                placeholder="e.g '60'"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                                 control={form.control}
                                 name="workingHours"
@@ -614,13 +1022,13 @@ const CreateObbSheetForm = ({
                                             <Input
                                                 type="number"
                                                 className="hide-steps-number-input"
-                                                disabled={isSubmitting}
-                                                placeholder="Enter the hours"
+                                                disabled={true}
+                                                placeholder="(End time - Start time)"
                                                 {...field}
-                                                onChange={(e) => {
-                                                    const newValue: number = parseInt(e.target.value);
-                                                    form.setValue('workingHours', newValue, { shouldValidate: true, shouldDirty: true });
-                                                }}
+                                            // onChange={(e) => {
+                                            //     const newValue: number = parseInt(e.target.value);
+                                            //     form.setValue('workingHours', newValue, { shouldValidate: true, shouldDirty: true });
+                                            // }}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -633,7 +1041,7 @@ const CreateObbSheetForm = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>
-                                            Efficiency Set Level 1 (Low)
+                                            Efficiency Set Level 1 (Low) - TLS
                                         </FormLabel>
                                         <FormControl>
                                             <Input
@@ -658,7 +1066,7 @@ const CreateObbSheetForm = ({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>
-                                            Efficiency Set Level 3 (High)
+                                            Efficiency Set Level 3 (High) - TLS
                                         </FormLabel>
                                         <FormControl>
                                             <Input
@@ -799,7 +1207,7 @@ const CreateObbSheetForm = ({
                     </div>
                     {mode && mode === 'create' ?
                         <div className="mt-4 flex justify-between gap-2">
-                            <Button variant='outline' className="flex gap-2 pr-5" onClick={() => form.reset()}>
+                            <Button type="button" variant='outline' className="flex gap-2 pr-5" onClick={() => form.reset()}>
                                 Reset
                             </Button>
                             <Button
@@ -815,7 +1223,7 @@ const CreateObbSheetForm = ({
                         :
                         <div className="mt-4 flex justify-between gap-2">
                             <Link href='/obb-sheets'>
-                                <Button variant='outline' className="flex gap-2 pr-5 hover:border-slate-300 text-slate-600" onClick={() => form.reset()}>
+                                <Button type="button" variant='outline' className="flex gap-2 pr-5 hover:border-slate-300 text-slate-600" onClick={() => form.reset()}>
                                     <ArrowLeft className="w-4 h-4" />
                                     View all sheets
                                 </Button>

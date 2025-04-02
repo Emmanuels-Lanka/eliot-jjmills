@@ -9,12 +9,14 @@ export async function DELETE(
     try {
         const existingMachineById = await db.sewingMachine.findUnique({
             where: {
-                id: params.machineId
-            }
+                id: params.machineId,
+            },
         });
 
         if (!existingMachineById) {
-            return new NextResponse("This machine does not exist", { status: 409 })
+            return new NextResponse("This machine does not exist", {
+                status: 409,
+            });
         }
 
         // Fetch the eliot device id
@@ -23,29 +25,31 @@ export async function DELETE(
                 id: params.machineId,
             },
             select: {
-                eliotDeviceId: true
-            }
-        })
+                eliotDeviceId: true,
+            },
+        });
 
         if (data?.eliotDeviceId) {
             // Change the isAssigned status on EliotDevice table
             const changedStatus = await db.eliotDevice.update({
                 where: {
-                    id: data?.eliotDeviceId
+                    id: data?.eliotDeviceId,
                 },
                 data: {
-                    isAssigned: false
-                }
-            })
+                    isAssigned: false,
+                },
+            });
         }
 
         const deletedMachine = await db.sewingMachine.delete({
             where: {
-                id: params.machineId
-            }
+                id: params.machineId,
+            },
         });
 
-        return new NextResponse("Machine deleted successfully", { status: 201 })
+        return new NextResponse("Machine deleted successfully", {
+            status: 201,
+        });
     } catch (error) {
         console.error("[DELETE_SEWING_MACHINE_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
@@ -57,70 +61,89 @@ export async function PUT(
     { params }: { params: { machineId: string } }
 ) {
     try {
-        const { unitId, machineType, brandName, serialNumber, machineId, ownership, eliotDeviceId } = await req.json();
+        const {
+            unitId,
+            machineType,
+            brandName,
+            serialNumber,
+            modelNumber,
+            machineId,
+            ownership,
+            eliotDeviceId,
+        } = await req.json();
 
         const existingMachineById = await db.sewingMachine.findUnique({
             where: {
-                id: params.machineId
-            }
+                id: params.machineId,
+            },
         });
 
         if (!existingMachineById) {
-            return new NextResponse("This machine does not exist", { status: 409 })
-        };
+            return new NextResponse("This machine does not exist", {
+                status: 409,
+            });
+        }
 
-        // If the existing machine already has eliotDeviceId
-        if (existingMachineById.eliotDeviceId) {
-            if (existingMachineById.eliotDeviceId !== eliotDeviceId) {
-                // Change the ELIOT device status available
-                await db.eliotDevice.update({
-                    where: {
-                        id: existingMachineById.eliotDeviceId
-                    },
-                    data: {
-                        isAssigned: false
-                    }
-                });
+        if (eliotDeviceId) {
+            // If the existing machine already has eliotDeviceId
+            if (existingMachineById.eliotDeviceId) {
+                if (existingMachineById.eliotDeviceId !== eliotDeviceId) {
+                    // Change the ELIOT device status available
+                    await db.eliotDevice.update({
+                        where: {
+                            id: existingMachineById.eliotDeviceId,
+                        },
+                        data: {
+                            isAssigned: false,
+                        },
+                    });
     
-                // Assign new device
+                    // Assign new device
+                    await db.eliotDevice.update({
+                        where: {
+                            id: eliotDeviceId,
+                        },
+                        data: {
+                            isAssigned: true,
+                        },
+                    });
+                }
+            } else {
+                // Change the ELIOT device status
                 await db.eliotDevice.update({
                     where: {
-                        id: eliotDeviceId
+                        id: eliotDeviceId,
                     },
                     data: {
-                        isAssigned: true
-                    }
+                        isAssigned: true,
+                    },
                 });
             }
-        } else {
-            // Change the ELIOT device status
-            await db.eliotDevice.update({
-                where: {
-                    id: eliotDeviceId
-                },
-                data: {
-                    isAssigned: true
-                }
-            })
-        };
+        }
 
         const updatedMachine = await db.sewingMachine.update({
             where: {
-                id: params.machineId
+                id: params.machineId,
             },
             data: {
                 brandName,
                 machineType,
                 machineId,
                 serialNumber,
+                modelNumber,
                 ownership,
                 unitId,
-                eliotDeviceId
-            }
+                eliotDeviceId: eliotDeviceId || null,
+            },
         });
 
-        return NextResponse.json({ data: updatedMachine, message: 'Sewing machine updated successfully'}, { status: 201 });
-        
+        return NextResponse.json(
+            {
+                data: updatedMachine,
+                message: "Sewing machine updated successfully",
+            },
+            { status: 201 }
+        );
     } catch (error) {
         console.error("[UPDATE_SEWING_MACHINE_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });

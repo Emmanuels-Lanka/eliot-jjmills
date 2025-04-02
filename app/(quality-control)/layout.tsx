@@ -24,10 +24,8 @@ const QcDashboardLayout = ({
 
     let verifiedUser = verify(value, secret) as JwtPayload;
         
-    if (typeof verifiedUser === 'object' && ('email' || 'role') in verifiedUser) {      // Assuming email and role are properties in the payload
-        if (verifiedUser.role !== 'quality-controller') {
-            return redirect('/dashboard');
-        }
+    if (verifiedUser.role !== 'quality-controller') {
+        return redirect('/dashboard');
     }
     
     return (

@@ -25,7 +25,7 @@ const RootLayout = ({
 
     return (
         <section className="min-h-screen w-full bg-slate-100">
-            <div className="mx-auto max-w-screen-xl">
+            <div className="mx-auto max-w-screen-xl px-4">
                 <RootHeader isLoggedIn={isLoggedIn} />
                 {children}
                 <AuthFooter page="root" />

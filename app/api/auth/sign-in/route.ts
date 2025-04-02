@@ -19,7 +19,7 @@ export async function POST(
                 email
             }
         });
-
+       
         if (!existingUserByEmail) {
             return new NextResponse("Email does not exist!", { status: 409 });
         };

@@ -22,52 +22,61 @@ model User {
 }
 
 model Staff {
-  id            String         @id @default(uuid())
-  name          String
-  email         String         @unique
-  phone         String
-  designation   String
-  employeeId    String         @unique
-  rfid          String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  gender        String
-  alertLogs     AlertLog[]
-  obbOperations ObbOperation[]
-  accInputMan   ObbSheet[]     @relation("AccInputMan")
-  fabInputMan   ObbSheet[]     @relation("FabricInputMan")
-  indEngineer   ObbSheet[]     @relation("IndEngineer")
-  mechanic      ObbSheet[]     @relation("Mechanic")
-  qualityIns    ObbSheet[]     @relation("QI")
-  supervisor1   ObbSheet[]     @relation("Supervisor1")
-  supervisor2   ObbSheet[]     @relation("Supervisor2")
-  staffSessions StaffSession[]
+  id                 String         @id @default(uuid())
+  name               String
+  email              String         @unique
+  phone              String
+  designation        String
+  employeeId         String         @unique
+  rfid               String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  gender             String
+  alertLogs          AlertLog[]
+  obbOperations      ObbOperation[]
+  accInputMan        ObbSheet[]     @relation("AccInputMan")
+  fabInputMan        ObbSheet[]     @relation("FabricInputMan")
+  indEngineer        ObbSheet[]     @relation("IndEngineer")
+  lineChief          ObbSheet[]     @relation("LineChief")
+  mechanic           ObbSheet[]     @relation("Mechanic")
+  qualityIns         ObbSheet[]     @relation("QI")
+  supervisorAssembly ObbSheet[]     @relation("assembly")
+  supervisorBack     ObbSheet[]     @relation("back")
+  supervisorFront    ObbSheet[]     @relation("front")
+  supervisorLineEnd  ObbSheet[]     @relation("line-end")
+  staffSessions      StaffSession[]
 }
 
 model Operator {
-  id               String               @id @default(uuid())
-  name             String
-  employeeId       String               @unique
-  rfid             String?              @unique
-  gender           String
-  designation      String
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  isLoggedIn       Boolean              @default(false)
-  alertLogs        AlertLog[]
-  operatorSessions OperatorSession[]
-  productionData   ProductionData[]
-  tslRecords       TrafficLightSystem[]
+  id                       String                     @id @default(uuid())
+  name                     String
+  employeeId               String                     @unique
+  rfid                     String?                    @unique
+  gender                   String
+  designation              String
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  isLoggedIn               Boolean                    @default(false)
+  alertLogs                AlertLog[]
+  OperatorEffectiveTime    OperatorEffectiveTime[]
+  operatorNonEffectiveTime OperatorNonEffectiveTime[]
+  operatorSessions         OperatorSession[]
+  productionData           ProductionData[]
+  ProductionEfficiencyData ProductionEfficiency[]
+  productionSMV            ProductionSMV[]
+  roamingQC                RoamingQC[]
+  tslRecords               TrafficLightSystem[]
 }
 
 model Unit {
-  id              String           @id @default(uuid())
-  name            String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  obbSheets       ObbSheet[]
-  productionLines ProductionLine[]
-  sewingMachines  SewingMachine[]
+  id                      String                    @id @default(uuid())
+  name                    String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  lineEfficiencyResources LineEfficiencyResources[]
+  obbSheets               ObbSheet[]
+  productionLines         ProductionLine[]
+  sewingMachines          SewingMachine[]
 }
 
 model ProductionLine {
@@ -84,15 +93,17 @@ model ProductionLine {
 }
 
 model EliotDevice {
-  id             String           @id @default(uuid())
-  isAssigned     Boolean          @default(false)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  installedDate  String
-  modelNumber    String
-  serialNumber   String           @unique
-  productionData ProductionData[]
-  sewingMachines SewingMachine?
+  id                       String                 @id @default(uuid())
+  isAssigned               Boolean                @default(false)
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  installedDate            String
+  modelNumber              String
+  serialNumber             String                 @unique
+  hasTrained               Boolean?               @default(false)
+  ProductionData           ProductionData[]
+  ProductionEfficiencyData ProductionEfficiency[]
+  sewingMachines           SewingMachine?
 }
 
 model SewingMachine {
@@ -109,8 +120,10 @@ model SewingMachine {
   serialNumber         String               @unique
   modelNumber          String?
   activeObbOperationId String?
+  isCombinedOperation  Boolean              @default(false)
   alertLogs            AlertLog[]
   obbOperations        ObbOperation[]
+  roamingQC            RoamingQC[]
   eliotDevice          EliotDevice?         @relation(fields: [eliotDeviceId], references: [id], onDelete: Cascade)
   unit                 Unit                 @relation(fields: [unitId], references: [id], onDelete: Cascade)
   tslRecords           TrafficLightSystem[]
@@ -120,56 +133,75 @@ model SewingMachine {
 }
 
 model ObbSheet {
-  id               String         @id @default(uuid())
-  name             String
-  productionLineId String
-  unitId           String
-  indEngineerId    String?
-  supervisor1Id    String?
-  supervisor2Id    String?
-  mechanicId       String?
-  qualityInsId     String?
-  accInputManId    String?
-  fabInputManId    String?
-  buyer            String
-  style            String
-  item             String
-  operators        Int
-  helpers          Int
-  startingDate     String
-  endingDate       String
-  workingHours     Int
-  efficiencyLevel1 Int
-  efficiencyLevel2 Int
-  efficiencyLevel3 Int
-  itemReference    String?
-  totalMP          Int?
-  totalSMV         Int?
-  bottleNeckTarget Int?
-  target100        Int?
-  ucl              Int?
-  lcl              Int?
-  balancingLoss    Int?
-  balancingRatio   Int?
-  colour           String?
-  supResponseTime  Int?
-  mecResponseTime  Int?
-  qiResponseTime   Int?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  isActive         Boolean        @default(false)
-  obbOperations    ObbOperation[]
-  accInputMan      Staff?         @relation("AccInputMan", fields: [accInputManId], references: [id])
-  fabInputMan      Staff?         @relation("FabricInputMan", fields: [fabInputManId], references: [id])
-  indEngineer      Staff?         @relation("IndEngineer", fields: [indEngineerId], references: [id])
-  mechanic         Staff?         @relation("Mechanic", fields: [mechanicId], references: [id])
-  productionLine   ProductionLine @relation(fields: [productionLineId], references: [id], onDelete: Cascade)
-  qualityIns       Staff?         @relation("QI", fields: [qualityInsId], references: [id])
-  supervisor1      Staff?         @relation("Supervisor1", fields: [supervisor1Id], references: [id])
-  supervisor2      Staff?         @relation("Supervisor2", fields: [supervisor2Id], references: [id])
-  unit             Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  id                      String                    @id @default(uuid())
+  name                    String
+  productionLineId        String
+  unitId                  String
+  indEngineerId           String?
+  mechanicId              String?
+  qualityInsId            String?
+  accInputManId           String?
+  fabInputManId           String?
+  buyer                   String
+  style                   String
+  item                    String
+  operators               Int
+  helpers                 Int
+  startingDate            String
+  endingDate              String
+  workingHours            Float?
+  efficiencyLevel1        Int
+  efficiencyLevel2        Int
+  efficiencyLevel3        Int
+  itemReference           String?
+  totalMP                 Int?
+  bottleNeckTarget        Int?
+  target100               Int?
+  ucl                     Int?
+  lcl                     Int?
+  balancingLoss           Int?
+  balancingRatio          Int?
+  colour                  String?
+  supResponseTime         Int?
+  mecResponseTime         Int?
+  qiResponseTime          Int?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  isActive                Boolean                   @default(false)
+  supervisorAssemblyId    String?
+  supervisorBackId        String?
+  supervisorFrontId       String?
+  supervisorLineEndId     String?
+  lineChiefId             String?
+  bundleTime              String?
+  personalAllowance       String?
+  factoryStartTime        String?
+  obbOperationsNo         Int?
+  factoryStopTime         String?
+  totalSMV                Float?
+  version                 String                    @default("1.0")
+  availableMinPerHour     Int?
+  isVisible               Boolean                   @default(false)
+  threshold               Int?
+  thresholdStatus         Boolean?
+  intervalStartTime       String                    @default("13:00:00")
+  intervalStopTime        String                    @default("14:00:00")
+  lineEfficiencyResources LineEfficiencyResources[]
+  obbOperations           ObbOperation[]
+  accInputMan             Staff?                    @relation("AccInputMan", fields: [accInputManId], references: [id])
+  fabInputMan             Staff?                    @relation("FabricInputMan", fields: [fabInputManId], references: [id])
+  indEngineer             Staff?                    @relation("IndEngineer", fields: [indEngineerId], references: [id])
+  lineChief               Staff?                    @relation("LineChief", fields: [lineChiefId], references: [id])
+  mechanic                Staff?                    @relation("Mechanic", fields: [mechanicId], references: [id])
+  productionLine          ProductionLine            @relation(fields: [productionLineId], references: [id])
+  qualityIns              Staff?                    @relation("QI", fields: [qualityInsId], references: [id])
+  supervisorAssembly      Staff?                    @relation("assembly", fields: [supervisorAssemblyId], references: [id])
+  supervisorBack          Staff?                    @relation("back", fields: [supervisorBackId], references: [id])
+  supervisorFront         Staff?                    @relation("front", fields: [supervisorFrontId], references: [id])
+  supervisorLineEnd       Staff?                    @relation("line-end", fields: [supervisorLineEndId], references: [id])
+  unit                    Unit                      @relation(fields: [unitId], references: [id])
 
-  @@index([productionLineId, unitId, indEngineerId, supervisor1Id, supervisor2Id, mechanicId, qualityInsId, accInputManId, fabInputManId])
+  @@index([productionLineId, unitId, indEngineerId, supervisorFrontId, supervisorBackId, supervisorAssemblyId, supervisorLineEndId, mechanicId, qualityInsId, accInputManId, fabInputManId])
 }
 
 model Operation {
@@ -177,32 +209,38 @@ model Operation {
   name          String         @unique
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  code          String?        @unique
   obbOperations ObbOperation[]
 }
 
 model ObbOperation {
-  id               String               @id @default(uuid())
-  seqNo            Int                  @default(0)
-  operationId      String
-  obbSheetId       String
-  smv              Int
-  target           Int
-  spi              Int
-  length           Int
-  totalStitches    Int
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  supervisorId     String?
-  isActive         Boolean              @default(true)
-  sewingMachineId  String?
-  obbSheet         ObbSheet             @relation(fields: [obbSheetId], references: [id], onDelete: Cascade)
-  operation        Operation            @relation(fields: [operationId], references: [id], onDelete: Cascade)
-  sewingMachine    SewingMachine?       @relation(fields: [sewingMachineId], references: [id])
-  supervisor       Staff?               @relation(fields: [supervisorId], references: [id])
-  operatorSessions OperatorSession[]
-  productionData   ProductionData[]
-  staffSessions    StaffSession[]
-  tslRecords       TrafficLightSystem[]
+  id                       String                 @id @default(uuid())
+  seqNo                    Int                    @default(0)
+  operationId              String
+  obbSheetId               String
+  smv                      Float
+  target                   Int
+  spi                      Int
+  length                   Int
+  totalStitches            Int
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  supervisorId             String?
+  isActive                 Boolean                @default(false)
+  sewingMachineId          String?
+  part                     String?
+  isCombined               Boolean                @default(false)
+  obbSheet                 ObbSheet               @relation(fields: [obbSheetId], references: [id], onDelete: Cascade)
+  operation                Operation              @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  sewingMachine            SewingMachine?         @relation(fields: [sewingMachineId], references: [id])
+  supervisor               Staff?                 @relation(fields: [supervisorId], references: [id])
+  operatorSessions         OperatorSession[]
+  productionData           ProductionData[]
+  ProductionEfficiencyData ProductionEfficiency[]
+  productionSMV            ProductionSMV[]
+  roamingQC                RoamingQC[]
+  staffSessions            StaffSession[]
+  tslRecords               TrafficLightSystem[]
 
   @@index([operationId, obbSheetId])
 }
@@ -238,67 +276,169 @@ model StaffSession {
 model ProductionData {
   id                String       @id @default(uuid())
   operatorRfid      String
-  eliotSerialNumber String
+  eliotSerialNumber String?
   obbOperationId    String
   productionCount   Int
   timestamp         String
   createdAt         DateTime     @default(now())
-  eliotDevice       EliotDevice  @relation(fields: [eliotSerialNumber], references: [serialNumber])
+  totalPcs          Int?
+  efficiency        Int?
+  EliotDevice       EliotDevice? @relation(fields: [eliotSerialNumber], references: [serialNumber])
   obbOperation      ObbOperation @relation(fields: [obbOperationId], references: [id], onDelete: Cascade)
   operator          Operator     @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
 
   @@index([operatorRfid, eliotSerialNumber, obbOperationId])
 }
 
+model ProductionEfficiency {
+  id                String       @id @default(uuid())
+  operatorRfid      String
+  eliotSerialNumber String?
+  obbOperationId    String
+  totalPcs          Int?
+  efficiency        Int?
+  timestamp         String
+  createdAt         DateTime     @default(now())
+  EliotDevice       EliotDevice? @relation(fields: [eliotSerialNumber], references: [serialNumber])
+  obbOperation      ObbOperation @relation(fields: [obbOperationId], references: [id], onDelete: Cascade)
+  operator          Operator     @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+}
+
 model AlertLog {
-  id              String        @id @default(uuid())
-  machineId       String
+  id              String         @id @default(uuid())
+  machineId       String?
   operatorRfid    String
   employeeId      String
   alertType       String
-  smsStatus       String        @default("SENDING")
-  emailStatus     String        @default("SENDING")
-  createdAt       DateTime      @default(now())
+  smsStatus       String         @default("SENDING")
+  emailStatus     String         @default("SENDING")
+  createdAt       DateTime       @default(now())
   loginTimestamp  String?
   logoutTimestamp String?
   reqTimestamp    String
-  employee        Staff         @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
-  sewingMachine   SewingMachine @relation(fields: [machineId], references: [machineId], onDelete: Cascade)
-  operator        Operator      @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+  employee        Staff          @relation(fields: [employeeId], references: [employeeId], onDelete: Cascade)
+  sewingMachine   SewingMachine? @relation(fields: [machineId], references: [machineId])
+  operator        Operator       @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
 
   @@index([machineId, operatorRfid, employeeId])
 }
 
 model TrafficLightSystem {
-  id             String        @id @default(uuid())
+  id             String         @id @default(uuid())
   timestamp      String
-  machineId      String
+  machineId      String?
   operatorRfid   String
   obbOperationId String
   qcEmail        String?
-  createdAt      DateTime      @default(now())
-  roundNo        Int           @default(1)
+  createdAt      DateTime       @default(now())
+  roundNo        Int            @default(1)
   colour         String
-  sewingMachine  SewingMachine @relation(fields: [machineId], references: [id], onDelete: Cascade)
-  obbOperation   ObbOperation  @relation(fields: [obbOperationId], references: [id], onDelete: Cascade)
-  operator       Operator      @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
-  qc             User?         @relation(fields: [qcEmail], references: [email])
+  sewingMachine  SewingMachine? @relation(fields: [machineId], references: [id])
+  obbOperation   ObbOperation   @relation(fields: [obbOperationId], references: [id], onDelete: Cascade)
+  operator       Operator       @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+  qc             User?          @relation(fields: [qcEmail], references: [email])
+
+  @@index([machineId, obbOperationId, operatorRfid])
 }
 
-model Offstand {
-  id             Int     @id @default(autoincrement())
-  status         String? @default("f") @db.VarChar(255)
-  operatorRfid   String? @db.VarChar(255)
-  startTimestamp String? @db.VarChar(255)
-  endTimestamp   String? @db.VarChar(255)
-  timeDiff       String? @db.VarChar(255)
+model OperatorNonEffectiveTime {
+  id             String   @id @default(uuid())
+  type           String
+  operatorRfid   String
+  startTimestamp String
+  endTimestamp   String?
+  timeDifference String?
+  createdAt      DateTime @default(now())
+  status         Boolean  @default(false)
+  operator       Operator @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+
+  @@index([operatorRfid])
 }
 
 model OperatorEffectiveTime {
-  operatorRfid    String  @id @db.VarChar(255)
-  loginTimestamp  String? @db.VarChar(255)
-  logoutTimestamp String? @db.VarChar(255)
-  availableHrs    String? @db.VarChar(255)
-  stdHrs          String? @db.VarChar(255)
-  offStdHrs       String? @db.VarChar(255)
+  id                 String   @id @default(uuid())
+  operatorRfid       String
+  loginTimestamp     String
+  logoutTimestamp    String?
+  totalTime          String?
+  effectiveTime      String?
+  nonEffectiveTime   String?
+  mechanicDownTime   String?
+  productionDownTime String?
+  lunchBreakTime     String?
+  offStandTime       String?
+  status             String?  @db.VarChar(255)
+  operator           Operator @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+
+  @@index([operatorRfid])
+}
+
+model ProductionSMV {
+  id             Int          @id @default(autoincrement())
+  operatorRfid   String
+  smv            String
+  timestamp      String
+  obbOperationId String
+  obbOperation   ObbOperation @relation(fields: [obbOperationId], references: [id], onDelete: Cascade)
+  operator       Operator     @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+
+  @@index([obbOperationId, operatorRfid])
+}
+
+model RoamingQC {
+  id             String         @id @default(uuid())
+  unit           String?
+  lineId         String
+  obbOperationId String
+  operatorRfid   String
+  timestamp      String
+  createdAt      DateTime       @default(now())
+  defects        String[]       @default([])
+  inspectedQty   String
+  inspectedBy    String?        @default("Test RQC")
+  machineId      String?
+  colorStatus    String
+  sewingMachine  SewingMachine? @relation(fields: [machineId], references: [machineId])
+  obbOperation   ObbOperation   @relation(fields: [obbOperationId], references: [id], onDelete: Cascade)
+  operator       Operator       @relation(fields: [operatorRfid], references: [rfid], onDelete: Cascade)
+
+  @@index([obbOperationId, operatorRfid, machineId])
+}
+
+model LineEfficiencyResources {
+  id               String   @id @default(uuid())
+  unitId           String
+  obbSheetId       String
+  date             String
+  sewingOperators  Int
+  ironOperators    Int
+  helpers          Int
+  manPowers        Int
+  frontQcTarget    Int
+  backQcTarget     Int
+  endQcTarget      Int
+  workingHours     Int
+  totalSMV         Float
+  targetEfficiency Float
+  obbSheet         ObbSheet @relation(fields: [obbSheetId], references: [id], onDelete: Cascade)
+  unit             Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId, obbSheetId])
+}
+
+model EliotFirmwareUpdate {
+  id              String   @id @default(uuid())
+  eliotSerialNo   String   @unique
+  firmwareUrl     String
+  firmwareVersion String?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  part      String
+  activity  String
+  timestamp DateTime @default(now())
 }

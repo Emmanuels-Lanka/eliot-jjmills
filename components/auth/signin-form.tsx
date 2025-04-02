@@ -46,6 +46,7 @@ const SignInForm = () => {
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
             const res = await axios.post('/api/auth/sign-in', data);
+            
             toast({
                 title: res.data,
                 variant: "success",
@@ -57,32 +58,21 @@ const SignInForm = () => {
                     </div>
                 ),
             });
+
+
             router.push('/dashboard');
             form.reset();
         } catch (error: any) {
-            if (error.response && error.response.status === 409 || error.response.status === 401) {
-                toast({
-                    title: error.response.data,
-                    variant: "error"
-                });
-            } else {
-                toast({
-                    title: "Something went wrong! Try again",
-                    variant: "error",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                ERROR: {error.message}
-                            </code>
-                        </div>
-                    ),
-                });
-            }
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
         }
     }
 
     return (
-        <div className="mx-auto max-w-2xl border px-12 pt-8 pb-12 rounded-xl shadow-xl bg-white">
+        <div className="mx-auto max-w-2xl border px-8 md:px-12 pt-8 pb-12 rounded-xl shadow-xl bg-white">
             <div className="w-full mb-8 flex flex-col justify-center items-center">
                 <Image 
                     src="/eliot-logo.png"

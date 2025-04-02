@@ -8,10 +8,10 @@ export async function POST(
 ) {
     try {
         const { 
-            unitId, productionLineId, indEngineer, supervisor1, supervisor2, mechanic, qualityIns, accInputMan, fabInputMan, 
-            buyer, style, item, operators, helpers, startingDate, endingDate, workingHours, 
-            efficiencyLevel1, efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV, bottleNeckTarget, target100, 
-            ucl, lcl, balancingLoss, balancingRatio, colour, supResponseTime, mecResponseTime, qiResponseTime, 
+            version, unitId, productionLineId, indEngineer, supervisor1, supervisor2, supervisor3, supervisor4, mechanic, qualityIns, accInputMan, fabInputMan, lineChief, 
+            buyer, style, item, operators, helpers, startingDate, endingDate, workingHours, factoryStartTime, factoryStopTime, bundleTime, personalAllowance,
+            efficiencyLevel1, efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV, availableMinPerHour, obbOperationsNo, bottleNeckTarget, target100, 
+            ucl, lcl, balancingLoss, balancingRatio, colour, supResponseTime, mecResponseTime, qiResponseTime,intervalStartTime,intervalStopTime
         } = await req.json();
 
         let id = generateUniqueId();
@@ -33,20 +33,24 @@ export async function POST(
             }
         });
 
-        const name = `${line?.name}-${style}`
+        const name = `${line?.name}-${style}-v${version}`
 
         const newSheet = await db.obbSheet.create({
             data: {
-                id, name, unitId, productionLineId, 
+                id, version, name, unitId, productionLineId, 
                 indEngineerId: indEngineer, 
-                supervisor1Id: supervisor1, 
-                supervisor2Id: supervisor2,
+                supervisorFrontId: supervisor1, 
+                supervisorBackId: supervisor2,
+                supervisorAssemblyId: supervisor3,
+                supervisorLineEndId: supervisor4,
                 mechanicId: mechanic, 
                 qualityInsId: qualityIns, 
                 accInputManId: accInputMan, 
                 fabInputManId: fabInputMan, 
-                buyer, style, item, operators, helpers, startingDate, endingDate, workingHours, efficiencyLevel1,
-                efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV, bottleNeckTarget,
+                lineChiefId: lineChief,
+                intervalStopTime,intervalStartTime,
+                buyer, style, item, operators, helpers, startingDate, endingDate, factoryStartTime, factoryStopTime, workingHours: parseFloat(workingHours), bundleTime, personalAllowance,
+                efficiencyLevel1, efficiencyLevel2, efficiencyLevel3, itemReference, totalMP, totalSMV: parseFloat(totalSMV), availableMinPerHour, obbOperationsNo, bottleNeckTarget,
                 target100, ucl, lcl, balancingLoss, balancingRatio, colour, supResponseTime, mecResponseTime, qiResponseTime,
             }
         });
@@ -57,3 +61,31 @@ export async function POST(
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+
+
+
+
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const obbSheetId = searchParams.get("obbSheetId");
+        if (!obbSheetId) {
+            return new NextResponse("obbSheetId is required", { status: 400 });
+          }
+        const obbsheetDetails=await db.obbOperation.findMany({
+            where:{
+                obbSheetId:obbSheetId,
+            },
+
+            
+        })
+        return NextResponse.json({ data: obbsheetDetails, message: 'ObbOperation Data Fetched Successfuly' }, { status: 201 });
+        
+    } catch (error) {
+        console.error("[OBB_OPERATION_ERROR]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
+
+

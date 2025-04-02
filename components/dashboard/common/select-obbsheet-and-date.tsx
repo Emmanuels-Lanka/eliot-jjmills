@@ -66,7 +66,8 @@ const SelectObbSheetAndDate = ({
     const { isSubmitting, isValid } = form.formState;
 
     return (
-        <div className='mt-16 border px-12 pt-6 pb-10 rounded-lg bg-slate-100'>
+        <div className='mt-6 mb-10 border px-6 pt-6 pb-10 rounded-lg shadow-md bg-slate-100'>
+            
             <Form {...form}>
                 <form
                     onSubmit={form.handleSubmit(handleSubmit)}
@@ -212,7 +213,7 @@ const SelectObbSheetAndDate = ({
                     >
                         <Filter className={cn("w-5 h-5", isSubmitting && "hidden")} />
                         <Loader2 className={cn("animate-spin w-5 h-5 hidden", isSubmitting && "flex")} />
-                        Filter
+                        Genarate
                     </Button>
                 </form>
             </Form>

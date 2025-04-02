@@ -22,7 +22,7 @@ export async function GET(
                 // operatorRfid: "OP-00090",
                 // obbOperationId: "ly8pb4yn-rC6auXtWFDaK",
                 obbOperation: {
-                    obbSheetId: obbSheetId
+                    obbSheetId: obbSheetId,
                 },
                 timestamp: {
                     gte: startDate,
@@ -43,11 +43,17 @@ export async function GET(
                         seqNo: true,
                         target: true,
                         smv: true,
+                        part: true,
                         operation: {
                             select: {
                                 name: true
                             }
                         },
+                        sewingMachine: {
+                            select:{
+                                machineId:true
+                            }
+                        }
                     }
                 }
             },

@@ -1,0 +1,4 @@
+NODE_ENV=development
+JWT_SECRET=7jopxAFQ1G5I3Iu5eoMSfhUvT1qsBbrI2DHMIu3AOplECThEHk9h0SObkQZB9XCI
+
+DATABASE_URL="postgresql://vinojandb_owner:O2wZ9HYiBqIr@ep-square-salad-a15zfpb6-pooler.ap-southeast-1.aws.neon.tech/vinojandb?sslmode=require"

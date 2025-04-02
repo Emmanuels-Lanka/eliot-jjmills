@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Loader2, Trash2, Edit, MoreHorizontal, Ban, Sparkle } from "lucide-react";
+import { ArrowUpDown, Loader2, Trash2, Edit, MoreHorizontal, Ban, Sparkle, Copy } from "lucide-react";
 import axios from "axios";
 import { ObbSheet, Staff } from "@prisma/client"
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table"
+import moment from "moment-timezone";
 
 import {
     DropdownMenu,
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 import ConfirmModel from "@/components/model/confirm-model";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { handleDuplicateObb } from "../_actions/handle-duplicate-obb";
 
 const ActionCell = ({ row }: { row: any }) => {
     const { id } = row.original;
@@ -39,24 +41,11 @@ const ActionCell = ({ row }: { row: any }) => {
                 variant: 'success',
             });
         } catch (error: any) {
-            if (error.response && error.response.status === 409) {
-                toast({
-                    title: error.response.data,
-                    variant: "error"
-                });
-            } else {
-                toast({
-                    title: "Something went wrong! Try again",
-                    variant: "error",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                ERROR: {error.message}
-                            </code>
-                        </div>
-                    ),
-                });
-            }
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
         } finally {
             setIsLoading(false);
         }
@@ -99,9 +88,34 @@ const ActionCell = ({ row }: { row: any }) => {
         setIsLoading(false);
     }
 
+    const handleDuplicate = async (obbSheetId: string) => {
+        // console.log("Duplicate:", obbSheet);
+        try {
+            const res = await handleDuplicateObb(obbSheetId);
+            if (!res) {
+                toast({
+                    title: "Failed to duplicate OBB sheet!",
+                    variant: "error",
+                });
+                return;
+            } else {
+                toast({
+                    title: "Successfully duplicated OBB sheet!",
+                    variant: "success",
+                });
+                router.push(`/obb-sheets/${res.id}`);
+            }
+        } catch (error: any) {
+            console.error("DUPLICATE_OBB_ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
+        }
+    }
+
     return (
         <div className="flex gap-2">
-
             <div className="w-full flex justify-between items-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -138,6 +152,15 @@ const ActionCell = ({ row }: { row: any }) => {
                             {row.original.isActive === true ? "Deactive" : "Active"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            disabled={isLoading}
+                            onClick={() => handleDuplicate(row.original.id)}
+                            className="gap-2 font-medium cursor-pointer"
+                        >
+                            <Copy className="w-4 h-4" />
+                            Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <ConfirmModel onConfirm={() => onDelete(id)}>
                             <Button
                                 size='sm'
@@ -161,31 +184,189 @@ const ActionCell = ({ row }: { row: any }) => {
 export const columns: ColumnDef<ObbSheet>[] = [
     {
         accessorKey: "name",
-        header: "Name (line-style)",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    Name (line-style)
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("name");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
+    },
+    {
+        accessorKey: "style",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    Style
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("style");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
     },
     {
         accessorKey: "unit.name",
-        header: "Unit",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-1 flex items-center gap-1 min-w-0"
+          >
+            Unit <ArrowUpDown className="h-3 w-3" />
+          </Button>
+        ),
+        sortingFn: "alphanumeric",
     },
     {
         accessorKey: "productionLine.name",
-        header: "Line",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-1 flex items-center gap-1 min-w-0"
+          >
+            Line <ArrowUpDown className="h-3 w-3" />
+          </Button>
+        ),
+        sortingFn: "alphanumeric",
     },
     {
         accessorKey: "buyer",
-        header: "Buyer",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    Buyer
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("buyer");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
     },
     {
         accessorKey: "colour",
-        header: "Colour",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    Colour
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("colour");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
+    },
+    // {
+    //     accessorKey: "name",
+    //     header: "Name (line-style)",
+    // },
+    // {
+    //     accessorKey: "style",
+    //     header: "Style",
+    // },
+    // {
+    //     accessorKey: "unit.name",
+    //     header: "Unit",
+    // },
+    // {
+    //     accessorKey: "productionLine.name",
+    //     header: "Line",
+    // },
+    // {
+    //     accessorKey: "buyer",
+    //     header: "Buyer",
+    // },
+    // {
+    //     accessorKey: "colour",
+    //     header: "Color",
+    // },
+    {
+        accessorKey: "updatedAt",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-3"
+                >
+                    Last Update
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const dateValue: Date = row.getValue("updatedAt");
+            const date = new Date(dateValue);
+            const formattedDate = moment(date).format('DD MMM, YYYY');
+            const formattedTime = moment(date).format('hh:mm A');
+
+            return (
+                <p>{formattedTime} ({formattedDate})</p>
+            )
+        }
     },
     {
-        accessorKey: "item",
-        header: "Item",
+        accessorKey: "isActive",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-3"
+                >
+                    Action
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => <ActionCell row={row} />,
+        sortingFn: (rowA, rowB) => {
+            const isActiveA = rowA.original.isActive;
+            const isActiveB = rowB.original.isActive;
+            if (isActiveA === isActiveB) return 0;
+            return isActiveA ? 1 : -1;
+        },
     },
-    {
-        id: "actions",
-        header: "Action",
-        cell: ({ row }) => <ActionCell row={row} />
-    }
+
+    // {
+    //     id: "actions",
+    //     header: "Action",
+    //     cell: ({ row }) => <ActionCell row={row} />
+    // }
 ]

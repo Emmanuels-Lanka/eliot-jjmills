@@ -26,6 +26,8 @@ const CreateNewObbSheet = async () => {
     return acc;
   }, {});
 
+  // console.log("Line Chief:", categorizedStaff?.["line-chief"]);
+
   return (
     <CreateObbSheetForm 
       units={units} 
@@ -35,6 +37,7 @@ const CreateNewObbSheet = async () => {
       industrialEngineer={categorizedStaff?.["industrial-engineer"]}
       accessoriesInputMan={categorizedStaff?.["accessories-input-man"]}
       fabricInputMan={categorizedStaff?.["fabric-input-man"]}
+      lineChief={categorizedStaff?.["line-chief"]}
       mode="create" 
     />
   )

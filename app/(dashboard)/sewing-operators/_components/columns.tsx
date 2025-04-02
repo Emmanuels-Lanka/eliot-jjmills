@@ -32,24 +32,11 @@ const ActionCell = ({ row }: { row: any }) => {
                 variant: 'success',
             });
         } catch (error: any) {
-            if (error.response && error.response.status === 409) {
-                toast({
-                    title: error.response.data,
-                    variant: "error"
-                });
-            } else {
-                toast({
-                    title: "Something went wrong! Try again",
-                    variant: "error",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                ERROR: {error.message}
-                            </code>
-                        </div>
-                    ),
-                });
-            }
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
         } finally {
             setIsLoading(false);
         }
@@ -92,15 +79,67 @@ const ActionCell = ({ row }: { row: any }) => {
 export const columns: ColumnDef<Operator>[] = [
     {
         accessorKey: "name",
-        header: "Name",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    Name
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("name");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
     },
     {
         accessorKey: "employeeId",
-        header: "Emp ID",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    Emp ID
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("employeeId");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
+       
     },
     {
         accessorKey: "rfid",
-        header: "RFID",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-5"
+                >
+                    RFID
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("rfid");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
     },
     {
         accessorKey: "gender",

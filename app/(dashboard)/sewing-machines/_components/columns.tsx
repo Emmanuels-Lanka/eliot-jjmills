@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpDown, Loader2, Trash2, Edit } from "lucide-react";
 import axios from "axios";
 import { SewingMachine } from "@prisma/client"
+import { EliotDevice } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table"
 
@@ -32,24 +33,11 @@ const ActionCell = ({ row }: { row: any }) => {
                 variant: 'success',
             });
         } catch (error: any) {
-            if (error.response && error.response.status === 409) {
-                toast({
-                    title: error.response.data,
-                    variant: "error"
-                });
-            } else {
-                toast({
-                    title: "Something went wrong! Try again",
-                    variant: "error",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                ERROR: {error.message}
-                            </code>
-                        </div>
-                    ),
-                });
-            }
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
         } finally {
             setIsLoading(false);
         }
@@ -80,11 +68,16 @@ const ActionCell = ({ row }: { row: any }) => {
     )
 }
 
-export const columns: ColumnDef<SewingMachine>[] = [
+export const columns: ColumnDef<SewingMachine | any>[] = [
     {
         accessorKey: "serialNumber",
         header: "Serial No.",
     },
+    // {
+    //     id: 'eliotDevice.serialNumber',
+    //     header: 'Serial Number',
+       
+    //   },
     {
         accessorKey: "brandName",
         header: ({ column }) => {
@@ -137,6 +130,8 @@ export const columns: ColumnDef<SewingMachine>[] = [
         },
     },
     {
+        id: 'eliotDevice.serialNumber',
+    
         accessorKey: "eliotDevice.serialNumber",
         header: ({ column }) => {
             return (

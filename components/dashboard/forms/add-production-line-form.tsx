@@ -47,7 +47,9 @@ interface AddProductionLineFormProps {
 const formSchema = z.object({
     name: z.string().min(1, {
         message: "Production line name is required"
-    }),
+    }).refine((value) => !/[\/@]/.test(value), {
+        message: 'Line Name should not include these characters (? , /, #)',
+      }),
     unitId: z.string().min(1, {
         message: "Production line unit is required"
     }),
@@ -64,7 +66,7 @@ const AddProductionLineForm = ({
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            name: "LINE-",
+            name: "LINE-113-114",
             unitId: "",
         },
     });
@@ -89,24 +91,11 @@ const AddProductionLineForm = ({
             form.reset();
             setIsOpen(false)
         } catch (error: any) {
-            if (error.response && error.response.status === 409) {
-                toast({
-                    title: error.response.data,
-                    variant: "error"
-                });
-            } else {
-                toast({
-                    title: "Something went wrong! Try again",
-                    variant: "error",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                ERROR: {error.message}
-                            </code>
-                        </div>
-                    ),
-                });
-            }
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
         }
     }
 
@@ -145,7 +134,7 @@ const AddProductionLineForm = ({
                                             <FormControl>
                                                 <Input
                                                     disabled={isSubmitting}
-                                                    placeholder="Enter the line name"
+                                                    placeholder="LINE-113-114"
                                                     {...field}
                                                 />
                                             </FormControl>

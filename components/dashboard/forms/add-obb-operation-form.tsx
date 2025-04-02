@@ -49,41 +49,47 @@ import { DataTable } from "@/app/(dashboard)/obb-sheets/[obbSheetId]/_components
 interface AddObbOperationFormProps {
     operations: Operation[] | null;
     machines: SewingMachine[] | null;
-    assignedMachinesToOperations: (string | undefined)[] | undefined;
+    // assignedMachinesToOperations: (string | undefined)[] | undefined;
     obbOperations: ObbOperationData[] | undefined;
     obbSheetId: string;
     supervisor1: Staff | null;
     supervisor2: Staff | null;
+    
 }
+
+
 
 type FormValues = z.infer<typeof formSchema>;
 
 const formSchema = z.object({
+    seqNo: z.number(),
     operationId: z.string().min(1, {
         message: "Operation is required",
     }),
     sewingMachineId: z.string().min(1, {
         message: "Sewing machine is required",
     }),
-    smv: z.number(),
+    smv: z.string(),
     target: z.number(),
     spi: z.number(),
     length: z.number(),
     totalStitches: z.number(),
     obbSheetId: z.string(),
-    supervisorId: z.string().min(1, {
-        message: "Responsive supervisor is required",
-    }),
+    // supervisorId: z.string().min(1, {
+    //     message: "Responsive supervisor is required",
+    // }),
+    part: z.string()
 });
 
 const AddObbOperationForm = ({
     operations,
     machines,
-    assignedMachinesToOperations,
+    // assignedMachinesToOperations,
     obbOperations,
     obbSheetId,
     supervisor1,
     supervisor2,
+    
 }: AddObbOperationFormProps) => {
     const { toast } = useToast();
     const router = useRouter();
@@ -94,18 +100,58 @@ const AddObbOperationForm = ({
     const [isUpdating, setIsUpdating] = useState(false);
     const [updatingData, setUpdatingData] = useState<ObbOperationData | undefined>();
 
+    const [obbOperationData, setObbOperationData] = useState<ObbOperationData[]>([]);
+
+    useEffect(() => {
+        console.log("OBBSheet ID:", obbSheetId); 
+    
+        const fetchObbOperations = async () => {
+            if (!obbSheetId) {
+                console.warn("OBBSheet ID is not defined");
+                return; 
+            }
+    
+            try {
+                const response = await axios.get(`/api/obb-operation?obbSheetId=${obbSheetId}`);
+                const data = response.data;
+                console.log("dataaaaaaa", data);
+                console.log("Sequence Number:", data.data[0].seqNo);
+                const nextseqNo=data.data[0].seqNo+1
+                form.reset({
+                    seqNo: nextseqNo,
+                    operationId: "",
+                    sewingMachineId: "",
+                    smv: "0.1",
+                    target: undefined,
+                    spi: 0,
+                    length: 0,
+                    totalStitches: 0,
+                    obbSheetId: obbSheetId,
+                    part: ""
+                });
+                
+                console.log("next seq No",nextseqNo)
+            } catch (error) {
+                console.error("Error fetching OBB Operations", error);
+            }
+        };
+    
+        fetchObbOperations();
+    }, [obbSheetId]);
+ 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            seqNo:0,
             operationId: "",
             sewingMachineId: "",
-            smv: 0,
+            smv: "0.1",
             target: undefined,
             spi: 0,
             length: 0,
             totalStitches: 0,
             obbSheetId: obbSheetId,
-            supervisorId: ""
+            part: ""
         },
     });
 
@@ -116,13 +162,14 @@ const AddObbOperationForm = ({
             form.reset({
                 operationId: updatingData.operationId,
                 sewingMachineId: updatingData.sewingMachine?.id || '',
-                smv: updatingData.smv,
+                smv: updatingData.smv.toString(),
                 target: updatingData.target,
                 spi: updatingData.spi,
                 length: updatingData.length,
                 totalStitches: updatingData.totalStitches,
                 obbSheetId: updatingData.obbSheetId,
-                supervisorId: updatingData.supervisorId || '',
+                // supervisorId: updatingData.supervisorId || '',
+                part: updatingData.part || "",
             });
         }
     }, [updatingData, form]);
@@ -130,7 +177,10 @@ const AddObbOperationForm = ({
     const onSubmit = async (data: FormValues) => {
         if (!isUpdating) {
             try {
+                console.log("dataaa",data)
                 const res = await axios.post('/api/obb-operation', data);
+                console.log("submited data ", res.data);
+
                 toast({
                     title: "Successfully added new OBB operation",
                     variant: "success",
@@ -139,24 +189,11 @@ const AddObbOperationForm = ({
                 form.reset();
                 setIsEditing(false);
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
             }
         } else {
             if (updatingData) {
@@ -170,24 +207,11 @@ const AddObbOperationForm = ({
                     form.reset();
                     setIsUpdating(false);
                 } catch (error: any) {
-                    if (error.response && error.response.status === 409) {
-                        toast({
-                            title: error.response.data,
-                            variant: "error"
-                        });
-                    } else {
-                        toast({
-                            title: "Something went wrong! Try again",
-                            variant: "error",
-                            description: (
-                                <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                    <code className="text-slate-800">
-                                        ERROR: {error.message}
-                                    </code>
-                                </div>
-                            ),
-                        });
-                    }
+                    console.error("ERROR", error);
+                    toast({
+                        title: error.response.data || "Something went wrong! Try again",
+                        variant: "error"
+                    });
                 } finally {
                     setUpdatingData(undefined);
                 }
@@ -195,29 +219,21 @@ const AddObbOperationForm = ({
         }
     };
 
-    const handleEdit = (data: any) => {
-        try {
-            setIsUpdating(true);
-            setUpdatingData(data);
-        } catch (error) {
-            console.error("Handle Edit OBB Operation Error", error);
-        }
-    }
-
     const handleCancel = () => {
         setIsUpdating(false);
         setIsEditing(false);
         setUpdatingData(undefined);
         form.reset({
+            seqNo:0,
             operationId: "",
             sewingMachineId: "",
-            smv: undefined,
+            smv: undefined, 
             target: undefined,
             spi: undefined,
             length: undefined,
             totalStitches: undefined,
             obbSheetId: obbSheetId,
-            supervisorId: "",
+            
         });
     }
 
@@ -235,29 +251,38 @@ const AddObbOperationForm = ({
                 </Button>
             </div>
 
-            {(isUpdating || isEditing) && (
+            {(isUpdating || isEditing ||updatingData) && (
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="w-full space-y-6 mt-4"
                     >
                         <div className="flex flex-row gap-x-2">
-                            <div className="w-14">
-                                <FormItem>
-                                    <FormLabel>
-                                        Seq
-                                    </FormLabel>
-                                    <FormControl>
+                                <div className="w-14">
+                                    <FormField
+                                    control={form.control}
+                                    name="seqNo"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>
+                                            Seq
+                                        </FormLabel>
+                                        <FormControl>
                                         <Input
-                                            disabled={true}
-                                            value={updatingData?.seqNo}
-                                            className="bg-white border-black/20"
-                                            placeholder="@"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            </div>
+                                            value={field.value || ""} // Display empty string if value is 0 or falsy
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Set the value to 0 if the input is empty, else convert it to a number
+                                                form.setValue("seqNo", value === "" ? 0 : Number(value));
+                                            }}
+                                            placeholder="seqNo"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                                </div>
                             <div className="w-5/12">
                                 <FormField
                                     control={form.control}
@@ -380,7 +405,8 @@ const AddObbOperationForm = ({
                                                         <CommandList>
                                                             <CommandEmpty>No machine found!</CommandEmpty>
                                                             <CommandGroup>
-                                                                {machines?.filter(machine => !assignedMachinesToOperations?.includes(machine.id)).map((machine) => (
+                                                                {/* {machines?.filter(machine => !assignedMachinesToOperations?.includes(machine.id)).map((machine) => ( */}
+                                                                {machines?.map((machine) => (
                                                                     <CommandItem
                                                                         key={machine.id}
                                                                         value={machine.machineId}
@@ -426,7 +452,35 @@ const AddObbOperationForm = ({
                                     )}
                                 />
                             </div>
-                            <div className="w-3/12">
+                            
+                            <div className="w-2/12">
+                                <FormField
+                                    control={form.control}
+                                    name="part"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                              Part
+                                            </FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={updatingData?.part ? updatingData.part : field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select part" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="front">FRONT</SelectItem>
+                                                    <SelectItem value="back">BACK</SelectItem>
+                                                    <SelectItem value="assembly">ASSEMBLY</SelectItem>
+                                                    <SelectItem value="line-end">LINE END</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            {/* <div className="w-3/12">
                                 <FormField
                                     control={form.control}
                                     name="supervisorId"
@@ -450,8 +504,8 @@ const AddObbOperationForm = ({
                                         </FormItem>
                                     )}
                                 />
-                            </div>
-                            <div className="w-16">
+                            </div> */}
+                            <div className="w-20">
                                 <FormField
                                     control={form.control}
                                     name="smv"
@@ -461,7 +515,7 @@ const AddObbOperationForm = ({
                                                 SMV
                                             </FormLabel>
                                             <FormControl>
-                                                <Input
+                                                {/* <Input
                                                     type="number"
                                                     className="hide-steps-number-input"
                                                     disabled={isSubmitting}
@@ -470,6 +524,11 @@ const AddObbOperationForm = ({
                                                         const newValue: number = parseInt(e.target.value);
                                                         form.setValue('smv', newValue, { shouldValidate: true, shouldDirty: true });
                                                     }}
+                                                /> */}
+                                                <Input
+                                                    disabled={isSubmitting}
+                                                    placeholder="smv"
+                                                    {...field}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -609,7 +668,9 @@ const AddObbOperationForm = ({
                     {obbOperations && obbOperations?.length > 0 ?
                         <DataTable
                             data={obbOperations}
-                            handleEdit={handleEdit}
+                            obbSheetId={obbSheetId}
+                            operations={operations}
+                            machines={machines}
                         />
                         : (
                             <p className="text-sm mt-2 text-slate-500 italic">

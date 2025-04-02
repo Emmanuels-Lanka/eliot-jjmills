@@ -32,24 +32,11 @@ const ActionCell = ({ row }: { row: any }) => {
                 variant: 'success',
             });
         } catch (error: any) {
-            if (error.response && error.response.status === 409) {
-                toast({
-                    title: error.response.data,
-                    variant: "error"
-                });
-            } else {
-                toast({
-                    title: "Something went wrong! Try again",
-                    variant: "error",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                ERROR: {error.message}
-                            </code>
-                        </div>
-                    ),
-                });
-            }
+            console.error("ERROR", error);
+            toast({
+                title: error.response.data || "Something went wrong! Try again",
+                variant: "error"
+            });
         } finally {
             setIsLoading(false);
         }
@@ -84,6 +71,10 @@ export const columns: ColumnDef<Operation>[] = [
     {
         accessorKey: "name",
         header: "Name",
+    },
+    {
+        accessorKey: "code",
+        header: "Operation Code",
     },
     {
         accessorKey: "createdAt",

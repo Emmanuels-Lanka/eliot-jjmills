@@ -35,7 +35,10 @@ export async function PUT(
     { params }: { params: { operationId: string } }
 ) {
     try {
-        const { name } = await req.json();
+        const { name, code } = await req.json();
+
+        const formattedName: string = name.toUpperCase();
+        const formattedCode: string = code.toUpperCase();
 
         const existingOperationById = await db.operation.findUnique({
             where: {
@@ -52,7 +55,8 @@ export async function PUT(
                 id: params.operationId
             },
             data: {
-                name
+                name: formattedName,
+                code: formattedCode
             }
         });
 

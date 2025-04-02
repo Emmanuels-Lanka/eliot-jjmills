@@ -33,6 +33,9 @@ const formSchema = z.object({
     name: z.string().min(1, {
         message: "Operation name is required"
     }),
+    code: z.string().min(1, {
+        message: "Operation code is required"
+    }),
 });
 
 const AddOperation = ({
@@ -47,6 +50,7 @@ const AddOperation = ({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: initialData?.name || "",
+            code: initialData?.code || "",
         },
     });
 
@@ -63,36 +67,16 @@ const AddOperation = ({
                 const res = await axios.post('/api/operation', data);
                 toast({
                     title: "Successfully created new operation",
-                    variant: "success",
-                    description: (
-                        <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                            <code className="text-slate-800">
-                                Serial No: {res.data.data.serialNumber}
-                            </code>
-                        </div>
-                    ),
+                    variant: "success"
                 });
                 router.refresh();
                 form.reset();
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
             }
         } else {
             try {
@@ -104,24 +88,11 @@ const AddOperation = ({
                 router.refresh();
                 router.push('/operations');
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
             }
         }
     }
@@ -133,27 +104,54 @@ const AddOperation = ({
                     onSubmit={form.handleSubmit(onSubmit)}
                     className="w-full space-y-8 mt-4"
                 >
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-base">
-                                    Operation name
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        disabled={isSubmitting}
-                                        placeholder="Enter the operation name"
-                                        {...field}
-                                        // onChange={handleChange}
-                                        className="border-slate-300 bg-white"
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="w-full md:flex gap-4">
+                        <div className="md:w-3/4">
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base">
+                                            Operation name
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                disabled={isSubmitting}
+                                                placeholder="Enter the operation name"
+                                                {...field}
+                                                // onChange={handleChange}
+                                                className="border-slate-300 bg-white"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="md:w-1/4">
+                            <FormField
+                                control={form.control}
+                                name="code"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base">
+                                            Operation code
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                disabled={isSubmitting}
+                                                placeholder="Enter the operation code"
+                                                {...field}
+                                                // onChange={handleChange}
+                                                className="border-slate-300 bg-white"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
                     {mode && mode === 'create' ?
                         <div className="flex justify-between gap-2">
                             <Button variant='outline' className="flex gap-2 pr-5 text-slate-600 hover:border-slate-300" onClick={() => form.reset()}>

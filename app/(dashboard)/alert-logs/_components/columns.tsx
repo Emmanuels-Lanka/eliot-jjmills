@@ -49,7 +49,7 @@ export const columns: ColumnDef<AlertLog>[] = [
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                     className="-ml-3"
                 >
-                    Alert Type
+                    Alert <br></br>Type
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
             )
@@ -90,7 +90,18 @@ export const columns: ColumnDef<AlertLog>[] = [
     },
     {
         accessorKey: "loginTimestamp",
-        header: "Response Time",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-3"
+                >
+                    Response<br></br>Time
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
         cell: ({ row }) => {
             const reqTime: string = row.getValue("reqTimestamp");
             const loginTime: string = row.getValue("loginTimestamp");
@@ -107,7 +118,18 @@ export const columns: ColumnDef<AlertLog>[] = [
     },
     {
         accessorKey: "logoutTimestamp",
-        header: "Working Time",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-3"
+                >
+                    Working <br></br>Time
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
         cell: ({ row }) => {
             const loginTime: string = row.getValue("loginTimestamp");
             const logoutTime: string = row.getValue("logoutTimestamp");
@@ -126,10 +148,27 @@ export const columns: ColumnDef<AlertLog>[] = [
                     }
                 </>
             )
-        }
+        },
     },
     {
         accessorKey: "reqTimestamp",
-        header: "Request Time",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    className="-ml-3"
+                >
+                    Request<br></br>Time
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            )
+        },
+        cell: ({ row }) => {
+            const value: string = row.getValue("reqTimestamp");
+            return (
+                <p className="capitalize">{value}</p>
+            )
+        }
     },
 ]

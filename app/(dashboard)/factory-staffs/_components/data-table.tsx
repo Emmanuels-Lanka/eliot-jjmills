@@ -54,7 +54,7 @@ export function DataTable<TData, TValue>({
     return (
         <div>
             {/* Search bar */}
-            <div className="flex items-center py-4">
+            <div className="flex items-center py-8">
                 <Input
                     placeholder="Search staff employee ID..."
                     value={(table.getColumn("employeeId")?.getFilterValue() as string) ?? ""}
@@ -63,6 +63,18 @@ export function DataTable<TData, TValue>({
                     }
                     className="max-w-sm"
                 />
+
+                    <Input
+                    placeholder="Search By Designation..."  
+                    value={(table.getColumn("designation")?.getFilterValue() as string) ?? ""}  
+                    onChange={(event) =>
+                        table.getColumn("designation")?.setFilterValue(event.target.value)  
+                    }
+                    className="max-w-sm mx-4"  
+                />
+
+
+
             </div>
 
             {/* Table */}

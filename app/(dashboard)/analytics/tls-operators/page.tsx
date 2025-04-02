@@ -3,6 +3,9 @@ import { db } from '@/lib/db';
 
 const TLSOperators = async () => {
     const obbSheets = await db.obbSheet.findMany({
+        where: {
+            isActive: true,
+        },
         orderBy: {
             createdAt: "desc",
         },
@@ -10,6 +13,7 @@ const TLSOperators = async () => {
             id: true,
             name: true
         }
+
     });
 
     return (

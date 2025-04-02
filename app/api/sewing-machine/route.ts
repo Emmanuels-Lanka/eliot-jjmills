@@ -7,7 +7,7 @@ export async function POST(
     req: Request,
 ) {
     try {
-        const { unitId, machineType, brandName, serialNumber, machineId, eliotDeviceId, ownership } = await req.json();
+        const { unitId, machineType, brandName, serialNumber, modelNumber, machineId, eliotDeviceId, ownership } = await req.json();
 
 
         const existingMachineByMachineID = await db.sewingMachine.findUnique({
@@ -34,20 +34,23 @@ export async function POST(
                 machineId,
                 serialNumber,
                 ownership,
-                eliotDeviceId,
+                modelNumber,
+                eliotDeviceId: eliotDeviceId || null,
                 unitId
             }
         });
 
         // Change the device state of isAssigned
-        const deviceStatus = await db.eliotDevice.update({
-            where: {
-                id: eliotDeviceId
-            },
-            data: {
-                isAssigned: true
-            }
-        })
+        if (eliotDeviceId) {
+            await db.eliotDevice.update({
+                where: {
+                    id: eliotDeviceId
+                },
+                data: {
+                    isAssigned: true
+                }
+            })
+        }
 
         return NextResponse.json({ data: newMachine, message: 'Sewing machine is created successfully'}, { status: 201 });
 
@@ -56,3 +59,6 @@ export async function POST(
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+
+

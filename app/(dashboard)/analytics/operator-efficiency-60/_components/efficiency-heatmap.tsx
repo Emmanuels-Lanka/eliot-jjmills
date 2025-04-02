@@ -108,7 +108,7 @@ const EffiencyHeatmap = ({
     return (
         <div className='bg-slate-100 pt-5 -pl-8 rounded-lg border w-full mb-16 overflow-x-auto'>
             <div id="chart">
-                <ReactApexChart options={options} series={series} type="heatmap" height={height} width={width} />
+                <ReactApexChart options={options} series={series} type="heatmap" height={(height*2)} width={width} />
             </div>
             <div id="html-dist"></div>
         </div>

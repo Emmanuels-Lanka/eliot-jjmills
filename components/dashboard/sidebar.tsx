@@ -4,7 +4,7 @@ import SidebarRoutes from "./sidebar-routes"
 import SignOutButton from "../auth/signout-button"
 import Link from "next/link"
 
-const Sidebar = () => {
+const Sidebar = ({ role }: { role: string }) => {
     return (
         <div className="flex flex-col justify-between top-0 bottom-0 left-0 min-h-screen w-full z-50 text-white bg-dark">
             <div className="flex flex-col items-start">
@@ -20,7 +20,7 @@ const Sidebar = () => {
                     </Link>
                 </div>
                 <div className=" w-full overflow-y-auto sidebar-routes">
-                    <SidebarRoutes />
+                    <SidebarRoutes role={role}/>
                 </div>
             </div>
             <SignOutButton />

@@ -15,11 +15,13 @@ import {
 interface ConfirmModelProps {
     children: React.ReactNode;
     onConfirm: () => void;
+    subTitle?: string;
 };
 
 const ConfirmModel = ({
     children,
-    onConfirm
+    onConfirm,
+    subTitle,
 }: ConfirmModelProps) => {
     return (
         <AlertDialog>
@@ -30,7 +32,7 @@ const ConfirmModel = ({
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. It will remove permanently from the system.
+                        {subTitle ?? "This action cannot be undone. It will remove permanently from the system."}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

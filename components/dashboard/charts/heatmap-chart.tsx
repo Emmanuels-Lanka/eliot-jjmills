@@ -183,15 +183,17 @@ const HeatmapChart = ({
     let width: string = '100%';
     switch (true) {
         case heatmapCategories.length < 20:
-            width = '100%';
+            width = '50%';
             break;
         case heatmapCategories.length >= 20 && heatmapCategories.length < 28:
-            width = '100%';
+            width = '10%';
             break;
         case heatmapCategories.length >= 28:
-            width = '200%';
+            width = '20%';     
             break;
-    };
+        default:
+            width = '10%';
+    }
 
     return (
         <div className='bg-slate-100 pt-5 -pl-8 rounded-lg border w-full mb-16 overflow-x-auto'>

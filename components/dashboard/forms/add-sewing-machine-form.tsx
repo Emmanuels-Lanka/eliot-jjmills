@@ -62,9 +62,7 @@ const formSchema = z.object({
     machineId: z.string().min(1, {
         message: "Sewing Machine ID is required"
     }),
-    eliotDeviceId: z.string().min(1, {
-        message: "Eliot Device is required"
-    }),
+    eliotDeviceId: z.string(),
     ownership: z.string().min(1, {
         message: "Machine Type is required"
     }),
@@ -114,24 +112,11 @@ const AddSewingMachineForm = ({
                 router.refresh();
                 form.reset();
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
             }
         } else {
             try {
@@ -143,24 +128,11 @@ const AddSewingMachineForm = ({
                 router.refresh();
                 router.push('/sewing-machines');
             } catch (error: any) {
-                if (error.response && error.response.status === 409) {
-                    toast({
-                        title: error.response.data,
-                        variant: "error"
-                    });
-                } else {
-                    toast({
-                        title: "Something went wrong! Try again",
-                        variant: "error",
-                        description: (
-                            <div className='mt-2 bg-slate-200 py-2 px-3 md:w-[336px] rounded-md'>
-                                <code className="text-slate-800">
-                                    ERROR: {error.message}
-                                </code>
-                            </div>
-                        ),
-                    });
-                }
+                console.error("ERROR", error);
+                toast({
+                    title: error.response.data || "Something went wrong! Try again",
+                    variant: "error"
+                });
             }
         }
     };

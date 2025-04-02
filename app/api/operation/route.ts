@@ -6,23 +6,25 @@ export async function POST(
     req: Request,
 ) {
     try {
-        const { name } = await req.json();
+        const { name, code } = await req.json();
 
         const formattedName: string = name.toUpperCase();
+        const formattedCode: string = code.toUpperCase();
 
         const existingOperationByName = await db.operation.findUnique({
             where: {
-                name: formattedName
+                name: formattedCode
             }
         });
 
         if (existingOperationByName) {
-            return new NextResponse("Already created a operation with this same name! please use different one", { status: 409 })
+            return new NextResponse("Already created a operation with this same code! please use different one", { status: 409 })
         }
 
         const newOperation = await db.operation.create({
             data: {
-                name: formattedName
+                name: formattedName,
+                code: formattedCode
             }
         });
 

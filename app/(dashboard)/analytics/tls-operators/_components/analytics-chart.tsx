@@ -8,6 +8,9 @@ import { TrafficLightSystem } from "@prisma/client";
 import HeatmapChart from "@/components/dashboard/charts/heatmap-chart";
 import SelectObbSheetAndDate from "@/components/dashboard/common/select-obbsheet-and-date";
 import { useToast } from "@/components/ui/use-toast";
+// import { getData } from "./actions";
+import BarChartGraph from "./barchart";
+
 
 interface AnalyticsChartProps {
     obbSheets: {
@@ -43,6 +46,10 @@ const AnalyticsChart = ({
 
     const [heatmapData, setHeatmapData] = useState<number[][] | null>(null);
     const [heatmapCategories, setHeatmapCategories] = useState<string[] | null>(null);
+    const [filterApplied,setFilterApplied] = useState<boolean>(false)
+    
+    const [obbSheetId,setObbSheetId] = useState<string>("")
+    const [date,setDate] = useState<string>("")
 
     function processForHeatmap(productionData: ProductionItem[]) {
         const heatmapData: number[][] = Array.from({ length: 12 }, () => []);
@@ -86,13 +93,22 @@ const AnalyticsChart = ({
         try {
             data.date.setDate(data.date.getDate() + 1);
             const formattedDate = data.date.toISOString().split('T')[0];
-            const response = await axios.get(`/api/tls/fetch-tls-by-obb?obbSheetId=${data.obbSheetId}&date=${formattedDate}`);
+            // const response = await axios.get(`/api/tls/fetch-tls-by-obb?obbSheetId=${data.obbSheetId}&date=${formattedDate}`);
+               
+            
+            // const prod = await getData(data.obbSheetId,formattedDate)
+            
+            // const { heatmapData, xAxisCategories } = processForHeatmap(response.data.data);
+            // setHeatmapData(heatmapData);
+            // setHeatmapCategories(xAxisCategories);
+            // console.log('Heatmap Data:', JSON.stringify(heatmapData[8]));
+            // console.log('X-Axis Categories:', xAxisCategories);
 
-            const { heatmapData, xAxisCategories } = processForHeatmap(response.data.data);
-            setHeatmapData(heatmapData);
-            setHeatmapCategories(xAxisCategories);
-            console.log('Heatmap Data:', JSON.stringify(heatmapData[8]));
-            console.log('X-Axis Categories:', xAxisCategories);
+            setObbSheetId(data.obbSheetId);
+            setDate(formattedDate+"%");
+            setFilterApplied(true);
+            // const prod = await getData(data.obbSheetId,formattedDate)
+            // console.log(prod)
 
             router.refresh();
         } catch (error: any) {
@@ -117,15 +133,19 @@ const AnalyticsChart = ({
                 obbSheets={obbSheets}
                 handleSubmit={handleFetchProductions}
             />
-            {heatmapData !== null && heatmapCategories !== null ?
+            {obbSheetId.length > 0 ?
                 <div className="mt-12">
-                    <h2 className="text-lg mb-2 font-medium text-slate-700">{title}</h2>
-                    <HeatmapChart
+                    <h2 className="text-lg mb-2 font-medium text-slate-700"></h2>
+                    {/* <HeatmapChart
                         xAxisLabel='Operators for TLS'
                         height={720}
                         type="tls"
                         heatmapData={heatmapData}
                         heatmapCategories={heatmapCategories}
+                    /> */}
+                    <BarChartGraph
+                    obbSheetId={obbSheetId}
+                    date={date}
                     />
                 </div>
                 :

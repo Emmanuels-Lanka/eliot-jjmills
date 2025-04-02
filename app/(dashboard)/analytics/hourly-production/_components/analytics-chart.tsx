@@ -7,8 +7,8 @@ import { ProductionData } from "@prisma/client";
 
 import { useToast } from "@/components/ui/use-toast";
 import SelectObbSheetDateHour from "@/components/dashboard/common/select-obbsheet-date-hour";
-import BarChartGraph from "./bar-chart-graph";
-import LineChartGraph from "./line-chart-graph";
+import LineChartGraph from "./bar-chart-graph";
+import { getData } from "./actions";
 
 interface AnalyticsChartProps {
     obbSheets: {
@@ -31,7 +31,7 @@ const AnalyticsChart = ({
 
     const [production, setProduction] = useState<ProductionDataType[]>([]);
 
-    function processForBarchart({ productionData, hourGroup }: { productionData: ProductionData[]; hourGroup: string }) {
+    function processForBarchart({ productionData, hourGroup }: { productionData: any[]; hourGroup: string }) {
         const hourRanges: Record<string, [number, number]> = {
             "1": [7, 8],
             "2": [8, 9],
@@ -57,13 +57,13 @@ const AnalyticsChart = ({
         const productionCountMap: Record<string, { count: number; target: number }> = {};
 
         filteredData.forEach((data: any) => {
-            const operationName = data.obbOperation?.operation?.name;
-            const target = data.obbOperation?.target ?? 0;
+            const operationName = data.name;
+            const target = data.target ?? 0;
             if (operationName) {
                 if (!productionCountMap[operationName]) {
                     productionCountMap[operationName] = { count: 0, target };
                 }
-                productionCountMap[operationName].count += data.productionCount;
+                productionCountMap[operationName].count += data.count;
                 productionCountMap[operationName].target = target; // Assuming target is the same for all entries with the same operation
             }
         });
@@ -83,10 +83,12 @@ const AnalyticsChart = ({
             const formattedDate = data.date.toISOString().split('T')[0];
             
             const response = await axios.get(`/api/efficiency/production?obbSheetId=${data.obbSheetId}&date=${formattedDate}`);
-            console.log("DATA:", response.data.data);
             
-            const barchartData = processForBarchart({ productionData: response.data.data, hourGroup:data.hourGroup });
-            console.log("DATA:", barchartData);
+
+            const prod =await  getData(data.obbSheetId,(formattedDate+"%"))
+            
+            const barchartData = processForBarchart({ productionData: prod, hourGroup:data.hourGroup });
+           
             setProduction(barchartData);
             router.refresh();
         } catch (error: any) {

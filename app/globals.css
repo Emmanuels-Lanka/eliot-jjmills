@@ -177,3 +177,24 @@
 .apexcharts-xaxis-label tspan {
   z-index: 99 !important;
 }
+
+/* QR scanner - Custom styles */
+.camera-box > div > video, .camera-box > div > div > div > svg {
+  border-radius: 8px !important;
+}
+.camera-box > div > div > div {
+  height: 100% !important;
+}
+.camera-box > div > div > div > svg {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -9,8 +9,9 @@ const AlertLogs = async () => {
     },
   });
 
+
   return (
-    <div className='mx-auto max-w-7xl mt-12'>
+    <div className='mx-auto max-w-7xl mt-6'>
       <DataTable columns={columns} data={alertLogs} />
     </div>
   )

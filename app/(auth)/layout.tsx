@@ -15,7 +15,7 @@ const AuthLayout = ({
         return redirect('/dashboard');
     } else {
         return (
-            <div className="h-screen flex flex-col justify-between w-full bg-slate-900">
+            <div className="h-full md:h-screen flex flex-col justify-between w-full bg-slate-900">
                 <div className="auth-form flex items-center">
                     {children}
                 </div>

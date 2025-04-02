@@ -8,6 +8,7 @@ import { TrafficLightSystem } from "@prisma/client";
 import HeatmapChart from "@/components/dashboard/charts/heatmap-chart";
 import SelectObbSheetAndDate from "@/components/dashboard/common/select-obbsheet-and-date";
 import { useToast } from "@/components/ui/use-toast";
+import ChartContainerCompo from "../../daily-achivement/components/chart-container";
 
 interface AnalyticsChartProps {
     obbSheets: {
@@ -116,7 +117,9 @@ const AnalyticsChart = ({
             <SelectObbSheetAndDate
                 obbSheets={obbSheets}
                 handleSubmit={handleFetchProductions}
+                
             />
+            
             {heatmapData !== null && heatmapCategories !== null ?
                 <div className="mt-12">
                     <h2 className="text-lg mb-2 font-medium text-slate-700">{title}</h2>
@@ -131,6 +134,7 @@ const AnalyticsChart = ({
                 :
                 <div className="mt-12 w-full">
                     <p className="text-center text-slate-500">Please select the OBB sheet and date ☝️</p>
+                 
                 </div>
             }
         </div>
